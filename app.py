@@ -37,20 +37,20 @@ if 'feedback_data' not in st.session_state:
 # Configure litellm for debugging
 #litellm._turn_on_debug()
 
-# Model configuration based on environment
+
 # Model configuration based on environment
 def create_llm():
     if 'google_key' in st.session_state and st.session_state.google_key:
         return LLM(
             model="gemini/gemini-2.0-flash-thinking-exp",
-            api_key=st.session_state.google_key  # Add this line
+            api_key=st.session_state.google_key  
         )
     else:
-        st.error("Google API key not configured. Please add your API key in the sidebar.")
+        #st.error("Google API key not configured. Please add your API key in the sidebar.")
         return None
 
-# Then use this function when needed
-gemini_llm = create_llm()
+# Initialize the LLM variable but don't assign yet
+gemini_llm = None
 
 # Define Custom Tools for CrewAI
 class NewsSearchToolInput(BaseModel):
@@ -701,6 +701,8 @@ class Exporter:
 # API Configuration
 def api_config_section():
     """Configure API keys in sidebar"""
+    global gemini_llm
+    
     with st.sidebar.expander("API Configuration", expanded=True):
         # Google API Key (for Gemini)
         google_key = st.text_input("Google API Key", 
@@ -710,7 +712,13 @@ def api_config_section():
         if google_key:
             st.session_state.google_key = google_key
             os.environ["GOOGLE_API_KEY"] = google_key
-            st.sidebar.write(f"Google API key set: {google_key[:5]}..." if len(google_key) > 5 else "Invalid key")
+            
+            # Create the LLM with the new key
+            gemini_llm = create_llm()
+            
+            st.sidebar.success(f"✅ Google API key set successfully!")
+        else:
+            st.sidebar.warning("⚠️ Google API key required for AI functionality")
 
         # News API Key
         news_key = st.text_input("News API Key", 
